@@ -21,7 +21,11 @@ connectDB();
 
 // Middleware
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors({
+    origin: '*', // السماح بجميع المصادر (أي domain)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // السماح بجميع الطرق
+    allowedHeaders: ['Content-Type', 'Authorization'], // السماح بجميع الهيدرات
+  }));
 swaggerSetup(app);
 
 // حماية جميع المسارات باستخدام verifyToken
