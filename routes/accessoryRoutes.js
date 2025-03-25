@@ -57,6 +57,9 @@ router.post('/', accessoryController.addAccessory);
  *       400:
  *         description: Invalid query parameter.
  */
+
+router.get('/', accessoryController.getAccessories); // إضافة المسار لجلب جميع الإكسسوارات
+
 router.get('/filter/name', accessoryController.filterAccessoriesByName);
 /**
  * @swagger

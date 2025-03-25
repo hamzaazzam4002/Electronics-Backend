@@ -7,6 +7,8 @@ const router = express.Router();
 // حماية جميع المسارات باستخدام verifyToken
 router.use(authController.verifyToken);
 
+router.get('/', electronicPartController.getElectronicParts);
+
 /**
  * @swagger
  * /api/parts:
@@ -144,6 +146,6 @@ router.delete('/:id', electronicPartController.deletePart);
  *       401:
  *         description: Unauthorized (missing or invalid token).
  */
-router.get('/filter', electronicPartController.filterParts);
+router.get('/filter/name', electronicPartController.filterParts);
 
 module.exports = router;

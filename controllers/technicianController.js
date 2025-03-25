@@ -1,26 +1,245 @@
 const Technician = require('../models/Technician');
+const Electronic = require('../models/ElectronicPart');
+
+// exports.getTechnicians = async (req, res) => {
+//   try {
+//       const technicians = await Technician.find(); // جلب جميع الفنيين
+//       res.status(200).json({
+//           success: true,
+//           count: technicians.length,
+//           data: technicians,
+//       });
+//   } catch (err) {
+//       res.status(500).json({
+//           success: false,
+//           message: 'حدث خطأ أثناء جلب الفنيين',
+//           error: err.message,
+//       });
+//   }
+// };
+exports.getTechnicians = async (req, res) => {
+  try {
+    const technicians = await Technician.find();
+    res.status(200).json({
+      success: true,
+      count: technicians.length,
+      data: technicians,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+// exports.getTechnicianById = async (req, res) => {
+//   try {
+//     const technician = await Technician.findById(req.params.id);
+//     if (!technician) {
+//       return res.status(404).json({ success: false, message: 'Technician not found' });
+//     }
+//     res.status(200).json({ success: true, data: technician });
+//   } catch (err) {
+//     res.status(500).json({ success: false, error: err.message });
+//   }
+// };
+
+exports.getTechnicianById = async (req, res) => {
+  try {
+    const technician = await Technician.findById(req.params.id);
+    if (!technician) {
+      return res.status(404).json({ success: false, message: 'Technician not found' });
+    }
+    res.status(200).json({ success: true, data: technician });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+// exports.addTechnician = async (req, res) => {
+//   const { name } = req.body;
+//   try {
+//     const technician = new Technician({ name });
+//     await technician.save();
+//     res.status(201).json(technician);
+//   } catch (err) {
+//     res.status(400).json({ error: err.message });
+//   }
+// };
 
 exports.addTechnician = async (req, res) => {
-  const { name } = req.body;
   try {
-    const technician = new Technician({ name });
+    const technician = new Technician(req.body);
     await technician.save();
-    res.status(201).json(technician);
+    res.status(201).json({ success: true, data: technician });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, error: err.message });
   }
 };
 
-exports.addInvoice = async (req, res) => {
-  const { id } = req.params;
-  const { partName, quantity, price, amountPaid, remainingAmount, totalRemaining, isDebtor } = req.body;
+exports.updateTechnician = async (req, res) => {
   try {
-    const technician = await Technician.findById(id);
-    technician.invoices.push({ partName, quantity, price, amountPaid, remainingAmount, totalRemaining, isDebtor });
-    await technician.save();
-    res.status(201).json(technician);
+    const technician = await Technician.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!technician) {
+      return res.status(404).json({ success: false, message: 'Technician not found' });
+    }
+    res.status(200).json({ success: true, data: technician });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+exports.deleteTechnician = async (req, res) => {
+  try {
+    const technician = await Technician.findByIdAndDelete(req.params.id);
+    if (!technician) {
+      return res.status(404).json({ success: false, message: 'Technician not found' });
+    }
+    res.status(200).json({ success: true, message: 'Technician deleted' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+// exports.addInvoice = async (req, res) => {
+//   const { id } = req.params;
+//   const { partName, quantity, price, amountPaid, remainingAmount, totalRemaining, isDebtor } = req.body;
+//   try {
+//     const technician = await Technician.findById(id);
+//     technician.invoices.push({ partName, quantity, price, amountPaid, remainingAmount, totalRemaining, isDebtor });
+//     await technician.save();
+//     res.status(201).json(technician);
+//   } catch (err) {
+//     res.status(400).json({ error: err.message });
+//   }
+// };
+
+exports.addInvoiceToTechnician = async (req, res) => {
+  try {
+    const technician = await Technician.findById(req.params.id);
+    if (!technician) {
+      return res.status(404).json({ success: false, error: 'Technician not found' });
+    }
+
+    if (!technician.address) {
+      technician.address = 'عنوان افتراضي';
+    }
+
+    const { items, date } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, error: 'Items array is required and must not be empty' });
+    }
+
+    let totalAmountToAdd = 0;
+
+    for (const item of items) {
+      if (!item.partId || !item.partName || !item.quantity || !item.price || item.remainingAmount === undefined) {
+        return res.status(400).json({ success: false, error: 'All items must have partId, partName, quantity, price, and remainingAmount' });
+      }
+
+      const quantity = parseInt(item.quantity);
+      const price = parseFloat(item.price);
+      const paidAmount = parseFloat(item.paidAmount || 0);
+      const remainingAmount = parseFloat(item.remainingAmount);
+
+      if (isNaN(quantity) || quantity <= 0) {
+        return res.status(400).json({ success: false, error: `Invalid quantity for item ${item.partName}` });
+      }
+      if (isNaN(price) || price <= 0) {
+        return res.status(400).json({ success: false, error: `Invalid price for item ${item.partName}` });
+      }
+      if (isNaN(paidAmount) || paidAmount < 0) {
+        return res.status(400).json({ success: false, error: `Invalid paidAmount for item ${item.partName}` });
+      }
+      if (isNaN(remainingAmount) || remainingAmount < 0) {
+        return res.status(400).json({ success: false, error: `Invalid remainingAmount for item ${item.partName}` });
+      }
+
+      const electronic = await Electronic.findById(item.partId);
+      if (!electronic) {
+        return res.status(404).json({ success: false, error: `Electronic part with ID ${item.partId} not found` });
+      }
+
+      if (electronic.quantity < quantity) {
+        return res.status(400).json({ success: false, error: `Insufficient stock for ${item.partName}. Available: ${electronic.quantity}, Requested: ${quantity}` });
+      }
+
+      electronic.quantity -= quantity;
+      await electronic.save();
+
+      const invoice = {
+        partId: item.partId,
+        partName: item.partName,
+        quantity: quantity,
+        price: price,
+        paidAmount: paidAmount,
+        remainingAmount: remainingAmount,
+        date: date ? new Date(date) : Date.now(),
+      };
+
+      if (isNaN(new Date(invoice.date).getTime())) {
+        return res.status(400).json({ success: false, error: 'Invalid date format' });
+      }
+
+      technician.invoices.push(invoice);
+      totalAmountToAdd += (quantity * price) - paidAmount;
+    }
+
+    technician.totalDueAmount += totalAmountToAdd;
+    await technician.save();
+
+    res.status(200).json({ success: true, data: technician });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+exports.makePayment = async (req, res) => {
+  try {
+    const technician = await Technician.findById(req.params.id);
+    if (!technician) {
+      return res.status(404).json({ success: false, message: 'Technician not found' });
+    }
+
+    let remainingPayment = req.body.amount;
+    for (let invoice of technician.invoices) {
+      if (remainingPayment <= 0) break;
+
+      if (invoice.remainingAmount > 0) {
+        const paymentForInvoice = Math.min(remainingPayment, invoice.remainingAmount);
+        invoice.remainingAmount -= paymentForInvoice;
+        remainingPayment -= paymentForInvoice;
+      }
+    }
+
+    technician.totalDebt = technician.invoices.reduce((total, invoice) => total + invoice.remainingAmount, 0);
+    await technician.save();
+
+    res.status(200).json({ success: true, data: technician });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+
+exports.payAmountToTechnician = async (req, res) => {
+  try {
+    const technician = await Technician.findById(req.params.id);
+    if (!technician) {
+      return res.status(404).json({ success: false, error: 'Technician not found' });
+    }
+
+    const { amount } = req.body;
+    if (typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid payment amount' });
+    }
+
+    if (amount > technician.totalDueAmount) {
+      return res.status(400).json({ success: false, error: 'Payment amount exceeds total due amount' });
+    }
+
+    technician.totalDueAmount -= amount;
+    await technician.save();
+    res.status(200).json({ success: true, data: technician });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
   }
 };
 
@@ -284,3 +503,4 @@ exports.getGeneralStatistics = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+

@@ -3,6 +3,7 @@ const technicianController = require('../controllers/technicianController');
 
 const router = express.Router();
 
+
 /**
  * @swagger
  * /api/technicians:
@@ -24,9 +25,10 @@ const router = express.Router();
  *         description: Technician added successfully.
  *       400:
  *         description: Invalid input data.
- */
+*/
 router.post('/', technicianController.addTechnician);
 
+router.get('/', technicianController.getTechnicians);
 /**
  * @swagger
  * /api/technicians/{id}/invoices:
@@ -76,7 +78,10 @@ router.post('/', technicianController.addTechnician);
  *       404:
  *         description: Technician not found.
  */
-router.post('/:id/invoices', technicianController.addInvoice);
+// router.post('/:id/invoices', technicianController.addInvoice);
+router.post('/:id/invoices', technicianController.addInvoiceToTechnician);
+router.post('/:id/payment', technicianController.makePayment);
+router.post('/:id/pay', technicianController.payAmountToTechnician); // مسار جديد للسداد
 
 /**
  * @swagger
@@ -126,6 +131,8 @@ router.get('/invoices/filter', technicianController.filterInvoices);
  */
 router.get('/export/pdf', technicianController.exportInvoicesPDF);
 
+
+router.get('/:id', technicianController.getTechnicianById);
 /**
  * @swagger
  * /api/technicians/export/excel:
