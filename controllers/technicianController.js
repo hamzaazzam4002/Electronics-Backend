@@ -97,18 +97,7 @@ exports.deleteTechnician = async (req, res) => {
   }
 };
 
-// exports.addInvoice = async (req, res) => {
-//   const { id } = req.params;
-//   const { partName, quantity, price, amountPaid, remainingAmount, totalRemaining, isDebtor } = req.body;
-//   try {
-//     const technician = await Technician.findById(id);
-//     technician.invoices.push({ partName, quantity, price, amountPaid, remainingAmount, totalRemaining, isDebtor });
-//     await technician.save();
-//     res.status(201).json(technician);
-//   } catch (err) {
-//     res.status(400).json({ error: err.message });
-//   }
-// };
+
 
 exports.addInvoiceToTechnician = async (req, res) => {
   try {

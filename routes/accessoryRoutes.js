@@ -58,9 +58,51 @@ router.post('/', accessoryController.addAccessory);
  *         description: Invalid query parameter.
  */
 
+router.get('/filter/name', accessoryController.filterAccessoriesByName);
+
+/**
+ * @swagger
+ * /accessories:
+ *   get:
+ *     summary: استرجاع قائمة الإكسسوارات
+ *     description: هذا الـ endpoint يُستخدم لجلب قائمة بجميع الإكسسوارات المتوفرة في النظام.
+ *     tags:
+ *       - Accessories
+ *     responses:
+ *       200:
+ *         description: تم استرجاع قائمة الإكسسوارات بنجاح
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     description: معرف الإكسسوار
+ *                     example: 1
+ *                   name:
+ *                     type: string
+ *                     description: اسم الإكسسوار
+ *                     example: "سماعات لاسلكية"
+ *                   price:
+ *                     type: number
+ *                     description: سعر الإكسسوار
+ *                     example: 29.99
+ *       500:
+ *         description: خطأ في الخادم الداخلي
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "حدث خطأ أثناء استرجاع الإكسسوارات"
+ */
 router.get('/', accessoryController.getAccessories); // إضافة المسار لجلب جميع الإكسسوارات
 
-router.get('/filter/name', accessoryController.filterAccessoriesByName);
 /**
  * @swagger
  * /api/accessories/filter/quantity:

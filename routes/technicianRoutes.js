@@ -28,59 +28,422 @@ const router = express.Router();
 */
 router.post('/', technicianController.addTechnician);
 
-router.get('/', technicianController.getTechnicians);
+
 /**
  * @swagger
- * /api/technicians/{id}/invoices:
+ * /technicians:
+ *   get:
+ *     summary: استرجاع قائمة الفنيين
+ *     description: يُستخدم هذا الـ endpoint لجلب قائمة بجميع الفنيين المسجلين في النظام مع تفاصيل كل فني.
+ *     tags:
+ *       - Technicians
+ *     responses:
+ *       200:
+ *         description: تم استرجاع قائمة الفنيين بنجاح
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     description: معرف الفني
+ *                     example: "507f1f77bcf86cd799439011"
+ *                   address:
+ *                     type: string
+ *                     description: عنوان الفني
+ *                     example: "عنوان افتراضي"
+ *                   totalDueAmount:
+ *                     type: number
+ *                     description: إجمالي المبلغ المستحق
+ *                     example: 200.00
+ *                   invoices:
+ *                     type: array
+ *                     description: قائمة الفواتير الخاصة بالفني
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         partId:
+ *                           type: string
+ *                           example: "507f191e810c19729de860ea"
+ *                         partName:
+ *                           type: string
+ *                           example: "بطارية"
+ *                         quantity:
+ *                           type: integer
+ *                           example: 2
+ *                         price:
+ *                           type: number
+ *                           example: 50.00
+ *                         paidAmount:
+ *                           type: number
+ *                           example: 20.00
+ *                         remainingAmount:
+ *                           type: number
+ *                           example: 30.00
+ *                         date:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-03-26T10:00:00Z"
+ *       500:
+ *         description: خطأ في الخادم الداخلي
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "حدث خطأ أثناء استرجاع الفنيين"
+ */
+router.get('/', technicianController.getTechnicians);
+
+/**
+ * @swagger
+ * /technicians/{id}/invoices:
  *   post:
- *     summary: Add an invoice for a technician
- *     description: Add an invoice for a specific technician.
+ *     summary: إضافة فاتورة جديدة لفني
+ *     description: يُستخدم هذا الـ endpoint لإضافة فاتورة جديدة إلى قائمة فواتير فني معين بناءً على معرفه، مع تحديث المخزون والمبلغ المستحق.
+ *     tags:
+ *       - Technicians
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: ID of the technician.
+ *         description: معرف الفني
+ *         example: "507f1f77bcf86cd799439011"
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - items
  *             properties:
- *               partName:
+ *               items:
+ *                 type: array
+ *                 description: قائمة العناصر المراد إضافتها إلى الفاتورة
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - partId
+ *                     - partName
+ *                     - quantity
+ *                     - price
+ *                     - remainingAmount
+ *                   properties:
+ *                     partId:
+ *                       type: string
+ *                       description: معرف القطعة الإلكترونية
+ *                       example: "507f191e810c19729de860ea"
+ *                     partName:
+ *                       type: string
+ *                       description: اسم القطعة
+ *                       example: "بطارية"
+ *                     quantity:
+ *                       type: integer
+ *                       description: الكمية المطلوبة
+ *                       example: 2
+ *                     price:
+ *                       type: number
+ *                       description: سعر الوحدة
+ *                       example: 50.00
+ *                     paidAmount:
+ *                       type: number
+ *                       description: المبلغ المدفوع (اختياري، يفترض 0 إذا لم يُحدد)
+ *                       example: 20.00
+ *                     remainingAmount:
+ *                       type: number
+ *                       description: المبلغ المتبقي
+ *                       example: 80.00
+ *               date:
  *                 type: string
- *                 description: Name of the part.
- *               quantity:
- *                 type: number
- *                 description: Quantity of the part.
- *               price:
- *                 type: number
- *                 description: Price of the part.
- *               amountPaid:
- *                 type: number
- *                 description: Amount paid by the technician.
- *               remainingAmount:
- *                 type: number
- *                 description: Remaining amount to be paid.
- *               totalRemaining:
- *                 type: number
- *                 description: Total remaining amount.
- *               isDebtor:
- *                 type: boolean
- *                 description: Whether the technician is a debtor.
+ *                 format: date
+ *                 description: تاريخ الفاتورة (اختياري، يتم استخدام التاريخ الحالي إذا لم يُحدد)
+ *                 example: "2025-03-26"
  *     responses:
- *       201:
- *         description: Invoice added successfully.
+ *       200:
+ *         description: تم إضافة الفاتورة بنجاح
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "507f1f77bcf86cd799439011"
+ *                     invoices:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           partId:
+ *                             type: string
+ *                           partName:
+ *                             type: string
+ *                           quantity:
+ *                             type: integer
+ *                           price:
+ *                             type: number
+ *                           paidAmount:
+ *                             type: number
+ *                           remainingAmount:
+ *                             type: number
+ *                           date:
+ *                             type: string
+ *                             format: date-time
+ *                     totalDueAmount:
+ *                       type: number
+ *                       example: 80.00
  *       400:
- *         description: Invalid input data.
+ *         description: خطأ في الطلب (مثل بيانات غير صالحة أو مخزون غير كافٍ)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Insufficient stock for بطارية. Available: 1, Requested: 2"
  *       404:
- *         description: Technician not found.
+ *         description: الفني أو القطعة الإلكترونية غير موجودة
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Technician not found"
  */
-// router.post('/:id/invoices', technicianController.addInvoice);
 router.post('/:id/invoices', technicianController.addInvoiceToTechnician);
+
+
+/**
+ * @swagger
+ * /technicians/{id}/payment:
+ *   post:
+ *     summary: تسجيل دفعة مالية لفني
+ *     description: يُستخدم هذا الـ endpoint لتسجيل دفعة مالية لفني معين بناءً على معرفه، حيث يتم توزيع المبلغ المدفوع على الفواتير ذات المبالغ المتبقية وتحديث الدين الكلي.
+ *     tags:
+ *       - Technicians
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: معرف الفني
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 description: المبلغ المدفوع
+ *                 example: 50.00
+ *     responses:
+ *       200:
+ *         description: تم تسجيل الدفعة بنجاح
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "507f1f77bcf86cd799439011"
+ *                     invoices:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           partId:
+ *                             type: string
+ *                             example: "507f191e810c19729de860ea"
+ *                           partName:
+ *                             type: string
+ *                             example: "بطارية"
+ *                           quantity:
+ *                             type: integer
+ *                             example: 2
+ *                           price:
+ *                             type: number
+ *                             example: 50.00
+ *                           paidAmount:
+ *                             type: number
+ *                             example: 20.00
+ *                           remainingAmount:
+ *                             type: number
+ *                             example: 30.00
+ *                           date:
+ *                             type: string
+ *                             format: date-time
+ *                             example: "2025-03-26T10:00:00Z"
+ *                     totalDebt:
+ *                       type: number
+ *                       description: إجمالي الدين المتبقي بعد الدفعة
+ *                       example: 30.00
+ *       400:
+ *         description: خطأ في الطلب (مثل بيانات غير صالحة)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid amount provided"
+ *       404:
+ *         description: الفني غير موجود
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Technician not found"
+ */
 router.post('/:id/payment', technicianController.makePayment);
+
+
+/**
+ * @swagger
+ * /technicians/{id}/pay:
+ *   post:
+ *     summary: دفع مبلغ لتقليل دين الفني
+ *     description: يُستخدم هذا الـ endpoint لتسجيل دفعة مالية لتقليل المبلغ المستحق الكلي لفني معين بناءً على معرفه.
+ *     tags:
+ *       - Technicians
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: معرف الفني
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 description: المبلغ المدفوع لتقليل الدين
+ *                 example: 50.00
+ *     responses:
+ *       200:
+ *         description: تم تسجيل الدفعة بنجاح
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "507f1f77bcf86cd799439011"
+ *                     totalDueAmount:
+ *                       type: number
+ *                       description: المبلغ المستحق المتبقي بعد الدفع
+ *                       example: 150.00
+ *                     invoices:
+ *                       type: array
+ *                       description: قائمة الفواتير (غير متأثرة بهذا الـ endpoint)
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           partId:
+ *                             type: string
+ *                           partName:
+ *                             type: string
+ *                           quantity:
+ *                             type: integer
+ *                           price:
+ *                             type: number
+ *                           paidAmount:
+ *                             type: number
+ *                           remainingAmount:
+ *                             type: number
+ *                           date:
+ *                             type: string
+ *                             format: date-time
+ *       400:
+ *         description: خطأ في الطلب (مثل مبلغ غير صالح أو يتجاوز الدين الكلي)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Payment amount exceeds total due amount"
+ *       404:
+ *         description: الفني غير موجود
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Technician not found"
+ */
 router.post('/:id/pay', technicianController.payAmountToTechnician); // مسار جديد للسداد
 
 /**
